@@ -1,0 +1,23 @@
+
+# Node.js paket klasörleri
+node_modules/
+
+# Ortam değişkenleri ve gizli bilgiler
+.env
+.env.*
+!.env.example
+
+# React üretim dosyaları
+dist/
+build/
+
+# Log dosyaları
+*.log
+npm-debug.log*
+
+# İşletim sistemi dosyaları
+.DS_Store
+Thumbs.db
+
+# Editör dosyaları
+.vscode/
