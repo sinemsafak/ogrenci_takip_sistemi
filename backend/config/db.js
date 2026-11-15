@@ -1,8 +1,8 @@
-//.env dosyasındaki gizli bilgileri yükler 
-require("dotenv").config();
-
 //mysql bağlantısı için mysql2 paketini kullanır 
-const mysql = reuire("mysql2/promise");
+const mysql = require("mysql2/promise");
+
+//.env dosyasındaki gizli bilgileri yükler 
+require("dotenv").config({ override: true });
 
 //veritabanı bağlantı havuzunu oluşturur 
 const db = mysql.createPool({
@@ -25,7 +25,7 @@ const db = mysql.createPool({
     waitForConnections:true,
 
     //bağlantı havuzundaki maksimum bağlantı sayısı
-    connetionLimit:10,
+    connectionLimit: 10,
 
     //bekleyen bağlantı sayısında sınır koymaz 
     queueLimit:0

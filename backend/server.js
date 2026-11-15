@@ -2,7 +2,7 @@
 require("dotenv").config();
 
 //express pakeitini projeye dahil etmek için 
-const express = reuire("express");
+const express = require("express");
 
 //cookie bilgilerini okuyabilmek için 
 const cookieParser = require("cookie-parser");
@@ -11,7 +11,7 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
 //mysql bağlanstısını içeriye aktarmak için 
-const db = require(".config/db");
+const db = require("./config/db");
 
 //express uyuglamasını oluşturmak için 
 const app = express();
@@ -45,32 +45,29 @@ app.get("/api/health", (req, res) => {
 
 //mysql bağlansıtısını kontrol etmek için 
 async function startServer(){
-    try{
-        //mysql bağlantı havuzundan bir bağlantı alır
-        const connection = await db.getConneciton();
+    try {
+        // MySQL bağlantı havuzundan bir bağlantı alır
+        const connection = await db.getConnection();
 
-        //bağlantının başarılı olduğunu bildiren bir mesaj yazdırır
         console.log("mysql bağlantısı başarılı");
 
-        //kullanılan bağlantıyı havuza geri bırakır 
+        // Bağlantıyı havuza geri bırakır
         connection.release();
 
-        //backend sunucusunu başlatır 
-        app.listen(PORT, ()=> {
-            console.log('backend sunucusu htpps://localthost:${PORT} adresinde çalışıor.');
+        // Backend sunucusunu başlatır
+        app.listen(PORT, () => {
+            console.log(`backend sunucusu http://localhost:${PORT} adresinde çalışıyor.`);
         });
 
+    } catch (error) {
+        console.error("mysql bağlantısı başarısız:", error.message);
+
+        process.exit(1);
     }
-    catch (error){
-            //veritabanı bağlantısı başarısızsa hata mesajını gösterir
-            console.error("mysql bağlantısı başarısız:", error.message);
-
-            //veritabanı baağlantısı olmadan sunucuyu başlatamaz 
-            process.exit(1);
-
-
-        }
-    }
-
+}
+console.log("DB HOST:", process.env.DB_HOST);
+console.log("DB USER:", process.env.DB_USER);
+console.log("DB NAME:", process.env.DB_NAME);
+console.log("DB PASSWORD LENGTH:", process.env.DB_PASSWORD?.length);
 //sunucuyu başlatır 
 startServer();
