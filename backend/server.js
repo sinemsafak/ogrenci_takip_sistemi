@@ -1,73 +1,65 @@
-// .env dosyasındaki ayarları yükler 
+// .env dosyasındaki ayarları yüklüyoruz.
 require("dotenv").config();
 
-//express pakeitini projeye dahil etmek için 
+// Gerekli kütüphaneleri içeri aktarıyoruz.
 const express = require("express");
-
-//cookie bilgilerini okuyabilmek için 
 const cookieParser = require("cookie-parser");
-
-//farklı portlarda çalışan frontendin backende erişebilemsi için 
 const cors = require("cors");
 
-//mysql bağlanstısını içeriye aktarmak için 
+// Veritabanı bağlantısını içeri aktarıyoruz.
 const db = require("./config/db");
 
-//express uyuglamasını oluşturmak için 
+// Giriş sistemi route'larını içeri aktarıyoruz.
+const authRoutes = require("./routes/authRoutes");
+
+// Express uygulamamızı oluşturuyoruz.
 const app = express();
 
-// .env içerisindeki port numarasını almak için 
 const PORT = process.env.PORT || 5000;
 
-//json formatında olan istekleri okuyabilmesi için 
+// JSON formatında gelen istekleri okumamızı sağlıyor.
 app.use(express.json());
 
-//gelen cookie bilgilerini okuması için 
+// Tarayıcıdan gelen cookie'leri okumamızı sağlıyor.
 app.use(cookieParser());
 
-//frontend ile backend arasındaki iletişime izin vermek için 
-app.use(cors({
-    //react geliştirme sunucusunun adresi
-    origin:"http://localhost:5173",
+// React uygulamasının backend'e cookie ile istek göndermesine izin veriyoruz.
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true
+  })
+);
 
-    //cookie gönderilmesine izin vermek için 
-    credentials:true
-}));
-
-//bakend kontrol endpointi 
+// Sunucunun çalışıp çalışmadığını kontrol eden test adresi.
 app.get("/api/health", (req, res) => {
-    // sunucunun çalıştığını bildiren yanıt 
-    res.status(200).json({
-        success:true,
-        message:"backend sunucusu çalışıyor"
-    });
+  res.status(200).json({
+    success: true,
+    message: "Backend sunucusu çalışıyor."
+  });
 });
 
-//mysql bağlansıtısını kontrol etmek için 
-async function startServer(){
-    try {
-        // MySQL bağlantı havuzundan bir bağlantı alır
-        const connection = await db.getConnection();
+// Kimlik doğrulama adreslerini uygulamaya bağlıyoruz.
+app.use("/api/auth", authRoutes);
 
-        console.log("mysql bağlantısı başarılı");
+// Önce MySQL bağlantısını test edip ardından sunucuyu başlatıyoruz.
+async function startServer() {
+  try {
+    const connection = await db.getConnection();
 
-        // Bağlantıyı havuza geri bırakır
-        connection.release();
+    console.log("MySQL veritabanı bağlantısı başarılı.");
 
-        // Backend sunucusunu başlatır
-        app.listen(PORT, () => {
-            console.log(`backend sunucusu http://localhost:${PORT} adresinde çalışıyor.`);
-        });
+    connection.release();
 
-    } catch (error) {
-        console.error("mysql bağlantısı başarısız:", error.message);
-
-        process.exit(1);
-    }
+    app.listen(PORT, () => {
+      console.log(
+        `Backend sunucusu http://localhost:${PORT} adresinde çalışıyor.`
+      );
+    });
+  } catch (error) {
+    console.error("MySQL bağlantı hatası:", error.message);
+    process.exit(1);
+  }
 }
-console.log("DB HOST:", process.env.DB_HOST);
-console.log("DB USER:", process.env.DB_USER);
-console.log("DB NAME:", process.env.DB_NAME);
-console.log("DB PASSWORD LENGTH:", process.env.DB_PASSWORD?.length);
-//sunucuyu başlatır 
+
 startServer();
