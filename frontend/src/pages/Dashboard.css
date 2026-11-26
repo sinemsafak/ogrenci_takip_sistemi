@@ -231,3 +231,49 @@
     font-size: 18px;
   }
 }
+
+/* Kullanıcı panelinin ekran genişliğini aşmasını engelliyoruz. */
+.dashboard-page {
+  width: 100%;
+  min-width: 0;
+}
+
+/* İçerik alanlarının ekran dışına taşmasını engelliyoruz. */
+.dashboard-header,
+.dashboard-content,
+.profile-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Uzun metinlerin alt satıra geçmesini sağlıyoruz. */
+.dashboard-welcome p,
+.dashboard-brand span {
+  overflow-wrap: anywhere;
+}
+
+/* Mobil ekranlarda üst menüyü yeniden düzenliyoruz. */
+@media (max-width: 600px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .dashboard-brand {
+    justify-content: center;
+  }
+
+  .logout-button {
+    width: 100%;
+  }
+
+  .dashboard-content {
+    width: 100%;
+    padding: 24px 16px;
+  }
+
+  .profile-card {
+    width: 100%;
+  }
+}
