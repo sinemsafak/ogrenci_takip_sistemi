@@ -1,14 +1,14 @@
 // React'in durum yönetimi özelliğini içeri aktarıyoruz.
 import { useState } from "react";
 
-// Backend giriş fonksiyonumuzu içeri aktarıyoruz.
+// Backend giriş fonksiyonunu içeri aktarıyoruz.
 import { loginUser } from "../services/authService";
 
 // Giriş sayfasının CSS dosyasını içeri aktarıyoruz.
 import "./Login.css";
 
-// Giriş sayfası bileşenimiz.
-function Login() {
+// App.jsx içerisinden onLogin fonksiyonunu alıyoruz.
+function Login({ onLogin }) {
 
   // Kullanıcının e-posta adresini tutuyoruz.
   const [email, setEmail] = useState("");
@@ -16,22 +16,19 @@ function Login() {
   // Kullanıcının şifresini tutuyoruz.
   const [password, setPassword] = useState("");
 
-  // Şifrenin görünür olup olmadığını kontrol ediyoruz.
+  // Şifre gösterme durumunu tutuyoruz.
   const [showPassword, setShowPassword] = useState(false);
 
   // Hata mesajını tutuyoruz.
   const [error, setError] = useState("");
 
-  // Başarı mesajını tutuyoruz.
-  const [message, setMessage] = useState("");
-
-  // Giriş isteğinin devam edip etmediğini kontrol ediyoruz.
+  // Giriş işleminin devam edip etmediğini tutuyoruz.
   const [loading, setLoading] = useState(false);
 
-  // Form gönderildiğinde çalışan asenkron fonksiyon.
+  // Form gönderildiğinde çalışan fonksiyon.
   async function handleSubmit(event) {
 
-    // Sayfanın otomatik yenilenmesini engelliyoruz.
+    // Sayfanın yenilenmesini engelliyoruz.
     event.preventDefault();
 
     // Devam eden bir giriş isteği varsa tekrar göndermiyoruz.
@@ -39,9 +36,8 @@ function Login() {
       return;
     }
 
-    // Önceki mesajları temizliyoruz.
+    // Önceki hata mesajını temizliyoruz.
     setError("");
-    setMessage("");
 
     // Boş alan kontrolü yapıyoruz.
     if (!email.trim() || !password) {
@@ -49,7 +45,7 @@ function Login() {
       return;
     }
 
-    // E-posta biçimini kontrol ediyoruz.
+    // E-posta adresinin biçimini kontrol ediyoruz.
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailPattern.test(email.trim())) {
@@ -57,36 +53,31 @@ function Login() {
       return;
     }
 
-    // Giriş işleminin başladığını belirtiyoruz.
+    // Yükleniyor durumunu başlatıyoruz.
     setLoading(true);
 
     try {
 
-      // Backend'e e-posta ve şifre gönderiyoruz.
-      const data = await loginUser(
-        email.trim(),
-        password
-      );
+      // Backend'e giriş isteği gönderiyoruz.
+      await loginUser(email.trim(), password);
 
-      // Giriş başarılıysa kullanıcıya mesaj gösteriyoruz.
-      setMessage(
-        `Giriş başarılı. Hoş geldiniz, ${data.user.username}!`
-      );
-
-      // Güvenlik için şifre alanını temizliyoruz.
+      // Şifre alanını temizliyoruz.
       setPassword("");
 
       // Şifre gösterme durumunu kapatıyoruz.
       setShowPassword(false);
 
+      // App.jsx üzerinden oturumu doğruluyoruz.
+      await onLogin();
+
     } catch (error) {
 
-      // Backend veya bağlantı hatasını kullanıcıya gösteriyoruz.
+      // Hata mesajını kullanıcıya gösteriyoruz.
       setError(error.message);
 
     } finally {
 
-      // İşlem başarılı veya başarısız olsa da yüklenmeyi bitiriyoruz.
+      // Yükleniyor durumunu kapatıyoruz.
       setLoading(false);
 
     }
@@ -100,8 +91,8 @@ function Login() {
         {/* Giriş ekranının başlık alanı */}
         <header className="login-header">
 
-          {/* Mezuniyet kepi simgesi */}
           <div className="login-logo" aria-hidden="true">
+
             <svg
               width="36"
               height="36"
@@ -116,6 +107,7 @@ function Login() {
               <path d="M6 12v5c3 3 9 3 12 0v-5" />
               <path d="M22 10v6" />
             </svg>
+
           </div>
 
           <h1>Öğrenci Bilgi Sistemi</h1>
@@ -132,7 +124,7 @@ function Login() {
           aria-busy={loading}
         >
 
-          {/* E-posta giriş alanı */}
+          {/* E-posta alanı */}
           <div className="form-group">
 
             <label htmlFor="email">
@@ -153,7 +145,7 @@ function Login() {
 
           </div>
 
-          {/* Şifre giriş alanı */}
+          {/* Şifre alanı */}
           <div className="form-group">
 
             <label htmlFor="password">
@@ -198,13 +190,6 @@ function Login() {
             </div>
           )}
 
-          {/* Başarı mesajı alanı */}
-          {message && (
-            <div className="success-message" role="status">
-              {message}
-            </div>
-          )}
-
           {/* Giriş yapma butonu */}
           <button
             type="submit"
@@ -216,7 +201,7 @@ function Login() {
 
         </form>
 
-        {/* Sayfanın alt bilgi alanı */}
+        {/* Alt bilgi alanı */}
         <footer className="login-footer">
           Öğrenci Bilgi Sistemi © {new Date().getFullYear()}
         </footer>
