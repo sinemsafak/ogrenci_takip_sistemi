@@ -7,14 +7,17 @@ const jwt = require("jsonwebtoken");
 // MySQL bağlantımızı içeri aktarıyoruz.
 const db = require("../config/db");
 
-// Kullanıcı giriş işlemi.
+
+// ==========================================
+// 1. KULLANICI GİRİŞ İŞLEMİ
+// ==========================================
+
 async function login(req, res) {
   try {
-    // Frontend'den gönderilen e-posta ve şifreyi alıyoruz.
-    const { email, password } = req.body;
-    console.log("Gelen alanlar:", Object.keys(req.body || {}));
-    
-    // İki alanın da doldurulup doldurulmadığını kontrol ediyoruz.
+    // Kullanıcıdan gelen e-posta ve şifreyi alıyoruz.
+    const { email, password } = req.body || {};
+
+    // E-posta ve şifre alanlarını kontrol ediyoruz.
     if (
       typeof email !== "string" ||
       typeof password !== "string" ||
@@ -27,13 +30,13 @@ async function login(req, res) {
       });
     }
 
-    // SQL sorgusunda ? kullanarak güvenli parametre gönderiyoruz.
+    // Kullanıcıyı e-posta adresine göre veritabanında arıyoruz.
     const [users] = await db.execute(
       "SELECT id, username, email, password FROM users WHERE email = ? LIMIT 1",
       [email.trim()]
     );
 
-    // Kullanıcı bulunamazsa genel bir hata döndürüyoruz.
+    // Kullanıcı bulunamadıysa hata döndürüyoruz.
     if (users.length === 0) {
       return res.status(401).json({
         success: false,
@@ -43,12 +46,13 @@ async function login(req, res) {
 
     const user = users[0];
 
-    // Girilen şifreyi veritabanındaki bcrypt hash ile karşılaştırıyoruz.
+    // Girilen şifreyi veritabanındaki hash ile karşılaştırıyoruz.
     const passwordCorrect = await bcrypt.compare(
       password,
       user.password
     );
 
+    // Şifre yanlışsa girişe izin vermiyoruz.
     if (!passwordCorrect) {
       return res.status(401).json({
         success: false,
@@ -56,14 +60,17 @@ async function login(req, res) {
       });
     }
 
-    // JWT içine şifre koymuyoruz, sadece kullanıcı kimliğini ekliyoruz.
+    // Kullanıcı kimliğiyle JWT oluşturuyoruz.
     const token = jwt.sign(
       { sub: String(user.id) },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
+      {
+        algorithm: "HS256",
+        expiresIn: process.env.JWT_EXPIRES_IN || "1h"
+      }
     );
 
-    // JWT'yi JavaScript tarafından okunamayan HttpOnly cookie'ye yazıyoruz.
+    // JWT'yi HttpOnly cookie içerisinde saklıyoruz.
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.COOKIE_SECURE === "true",
@@ -72,7 +79,7 @@ async function login(req, res) {
       path: "/"
     });
 
-    // Şifreyi veya JWT'yi JSON cevabında göndermiyoruz.
+    // Kullanıcının güvenli bilgilerini döndürüyoruz.
     return res.status(200).json({
       success: true,
       message: "Giriş başarılı.",
@@ -82,6 +89,7 @@ async function login(req, res) {
         email: user.email
       }
     });
+
   } catch (error) {
     console.error("Giriş hatası:", error.message);
 
@@ -92,5 +100,75 @@ async function login(req, res) {
   }
 }
 
-// Bu fonksiyonu route dosyasında kullanabilmek için dışarı aktarıyoruz.
-module.exports = { login };
+
+// ==========================================
+// 2. OTURUM VE KULLANICI BİLGİLERİ
+// ==========================================
+
+async function me(req, res) {
+  try {
+    // Middleware tarafından doğrulanan kullanıcı kimliğini alıyoruz.
+    const userId = req.user.id;
+
+    // Kullanıcının güncel bilgilerini veritabanından alıyoruz.
+    // Güvenlik nedeniyle password alanını sorgulamıyoruz.
+    const [users] = await db.execute(
+      "SELECT id, username, email FROM users WHERE id = ? LIMIT 1",
+      [userId]
+    );
+
+    // Kullanıcı artık veritabanında bulunmuyorsa erişimi engelliyoruz.
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Kullanıcı oturumu geçersiz."
+      });
+    }
+
+    // Giriş yapmış kullanıcının bilgilerini döndürüyoruz.
+    return res.status(200).json({
+      success: true,
+      user: users[0]
+    });
+
+  } catch (error) {
+    console.error("Oturum kontrol hatası:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Sunucu hatası oluştu."
+    });
+  }
+}
+
+
+// ==========================================
+// 3. KULLANICI ÇIKIŞ İŞLEMİ
+// ==========================================
+
+function logout(req, res) {
+  // Giriş sırasında oluşturulan token cookie'sini siliyoruz.
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.COOKIE_SECURE === "true",
+    sameSite: "lax",
+    path: "/"
+  });
+
+  // Çıkış işleminin başarılı olduğunu bildiriyoruz.
+  return res.status(200).json({
+    success: true,
+    message: "Çıkış başarılı."
+  });
+}
+
+
+// ==========================================
+// FONKSİYONLARI DIŞARI AKTARMA
+// ==========================================
+
+module.exports = {
+  login,
+  me,
+  logout
+};
