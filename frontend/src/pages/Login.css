@@ -1,0 +1,210 @@
+/* Giriş sayfasının genel arka planını oluşturuyoruz. */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: #eef2f7;
+}
+
+/* Giriş kartının görünümünü düzenliyoruz. */
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 40px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+}
+
+/* Başlık alanını ortalıyoruz. */
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+/* Mezuniyet kepi simgesinin arka planı. */
+.login-logo {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  background-color: #1e40af;
+  color: #ffffff;
+  border-radius: 16px;
+}
+
+/* Öğrenci Bilgi Sistemi başlığı. */
+.login-header h1 {
+  margin: 0 0 12px;
+  color: #172554;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+/* Başlığın altındaki açıklama. */
+.login-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Form elemanlarını alt alta yerleştiriyoruz. */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Her form alanının düzeni. */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Form alanlarının başlıkları. */
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+/* E-posta ve şifre giriş alanları. */
+.form-group input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Giriş alanlarının örnek metin rengi. */
+.form-group input::placeholder {
+  color: #94a3b8;
+}
+
+/* Kullanıcı giriş alanına tıkladığında oluşan görünüm. */
+.form-group input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Şifre alanını ve gösterme butonunu birlikte tutuyoruz. */
+.password-wrapper {
+  position: relative;
+}
+
+/* Şifrenin gösterme butonuyla üst üste gelmesini engelliyoruz. */
+.password-wrapper input {
+  padding-right: 80px;
+}
+
+/* Şifre gösterme ve gizleme butonu. */
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  padding: 6px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Şifre butonunun üzerine gelindiğindeki renk. */
+.password-toggle:hover {
+  color: #1e40af;
+}
+
+/* Giriş yap butonunun görünümü. */
+.login-button {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: #1e40af;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* Giriş butonunun üzerine gelindiğinde. */
+.login-button:hover {
+  background-color: #1e3a8a;
+}
+
+/* Klavye ile buton seçildiğinde görünür odak işareti. */
+.login-button:focus-visible,
+.password-toggle:focus-visible {
+  outline: 3px solid #60a5fa;
+  outline-offset: 3px;
+}
+
+/* Hata mesajının görünümü. */
+.error-message {
+  padding: 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Bilgilendirme mesajının görünümü. */
+.info-message {
+  padding: 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  color: #1e40af;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Sayfanın alt bilgi alanı. */
+.login-footer {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Mobil cihazlara uygun görünüm oluşturuyoruz. */
+@media (max-width: 480px) {
+  .login-page {
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 28px 22px;
+  }
+
+  .login-header h1 {
+    font-size: 23px;
+  }
+
+  .login-logo {
+    width: 56px;
+    height: 56px;
+  }
+}
