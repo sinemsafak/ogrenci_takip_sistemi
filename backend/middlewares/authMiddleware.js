@@ -1,5 +1,5 @@
 //jwt doğrulaması için gerekli kütüphane 
-const jwt=require("jsonbtoken");
+const jwt=require("jsonwebtoken");
 
 //kullanıcının oturmunu kontrol eden middleware fonksiyonu 
 function authMiddleware(req, res, next){
