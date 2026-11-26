@@ -1,24 +1,11 @@
-// Uygulamaya ait CSS dosyasını içeri aktarıyoruz.
-import "./App.css";
+// Giriş sayfasını içeri aktarıyoruz.
+import Login from "./pages/Login";
 
-// Uygulamamızın ana React bileşeni.
+// Uygulamamızın ana bileşeni.
 function App() {
-  return (
-    <main className="app-container">
-      <div className="welcome-card">
-        <h1>Öğrenci Bilgi Sistemi</h1>
-
-        <p>
-          Öğrenci Bilgi Sistemi uygulamasına hoş geldiniz.
-        </p>
-
-        <span className="status">
-          Frontend başarıyla çalışıyor.
-        </span>
-      </div>
-    </main>
-  );
+  // Şimdilik uygulama açıldığında giriş sayfasını gösteriyoruz.
+  return <Login />;
 }
 
-// App bileşenini diğer dosyalarda kullanabilmek için dışarı aktarıyoruz.
+// App bileşenini dışarı aktarıyoruz.
 export default App;
