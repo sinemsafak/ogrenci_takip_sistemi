@@ -1,4 +1,4 @@
-// React'in durum yönetimi ve yan etki özelliklerini içeri aktarıyoruz.
+// React özelliklerini içeri aktarıyoruz.
 import { useState, useEffect } from "react";
 
 // Uygulama sayfalarını içeri aktarıyoruz.
@@ -11,38 +11,39 @@ import {
   logoutUser
 } from "./services/authService";
 
-// Uygulamanın genel durum ekranlarına ait CSS dosyası.
+// Genel durum ekranlarının CSS dosyası.
 import "./App.css";
 
-// Ana uygulama bileşenimiz.
 function App() {
 
-  // Giriş yapan kullanıcının bilgilerini tutuyoruz.
+  // Giriş yapan kullanıcının bilgileri.
   const [user, setUser] = useState(null);
 
-  // İlk oturum kontrolünün devam edip etmediğini tutuyoruz.
+  // İlk oturum kontrolünün yüklenme durumu.
   const [loading, setLoading] = useState(true);
 
-  // Oturum kontrolünde oluşan hataları tutuyoruz.
+  // Bağlantı hatası mesajı.
   const [error, setError] = useState("");
 
-  // Oturum kontrolünü tekrar çalıştırmak için sayaç kullanıyoruz.
+  // Oturum kontrolünü tekrar başlatmak için sayaç.
   const [retryCount, setRetryCount] = useState(0);
 
-  // Uygulama açıldığında oturumu kontrol ediyoruz.
+  // Oturumun sona erdiğini belirten mesaj.
+  const [sessionMessage, setSessionMessage] = useState("");
+
+  // Kullanıcının giriş yapıp yapmadığını belirliyoruz.
+  const isAuthenticated = Boolean(user);
+
+  // Uygulama ilk açıldığında oturumu kontrol ediyoruz.
   useEffect(() => {
 
-    // Bileşen kaldırılırsa eski isteğin sonucu uygulanmasın.
     let cancelled = false;
 
     async function checkSession() {
-
       try {
 
-        // Backend'e mevcut oturumumuzu soruyoruz.
         const currentUser = await getCurrentUser();
 
-        // Bileşen hâlâ aktifse kullanıcı bilgisini güncelliyoruz.
         if (!cancelled) {
           setUser(currentUser);
           setError("");
@@ -50,7 +51,6 @@ function App() {
 
       } catch (error) {
 
-        // Sunucu bağlantı hatasını kaydediyoruz.
         if (!cancelled) {
           setUser(null);
           setError(error.message);
@@ -58,7 +58,6 @@ function App() {
 
       } finally {
 
-        // Oturum kontrolünün tamamlandığını belirtiyoruz.
         if (!cancelled) {
           setLoading(false);
         }
@@ -66,60 +65,149 @@ function App() {
       }
     }
 
-    // Oturum kontrolünü başlatıyoruz.
     checkSession();
 
-    // Bileşen kaldırıldığında eski isteğin sonucunu yok sayıyoruz.
     return () => {
       cancelled = true;
     };
 
   }, [retryCount]);
 
-  // Giriş başarılı olduktan sonra çalışan fonksiyon.
+  // Kullanıcı giriş yaptıktan sonra düzenli oturum kontrolü.
+  useEffect(() => {
+
+    // Giriş yapılmamışsa kontrol başlatmıyoruz.
+    if (!isAuthenticated) {
+      return;
+    }
+
+    let cancelled = false;
+    let checking = false;
+
+    async function validateSession() {
+
+      // Aynı anda birden fazla kontrol yapılmasını engelliyoruz.
+      if (cancelled || checking) {
+        return;
+      }
+
+      checking = true;
+
+      try {
+
+        // Backend üzerinden JWT oturumunu kontrol ediyoruz.
+        const currentUser = await getCurrentUser();
+
+        if (cancelled) {
+          return;
+        }
+
+        // Oturum geçersizse giriş ekranına dönüyoruz.
+        if (!currentUser) {
+
+          setUser(null);
+
+          setSessionMessage(
+            "Oturumunuz sona erdi. Lütfen tekrar giriş yapınız."
+          );
+
+        } else {
+
+          // Kullanıcı bilgilerini güncelliyoruz.
+          setUser(currentUser);
+
+        }
+
+      } catch (error) {
+
+        // Bağlantı hatasında oturumun geçersiz olduğunu varsaymıyoruz.
+        if (!cancelled) {
+          setUser(null);
+          setError(error.message);
+        }
+
+      } finally {
+
+        checking = false;
+
+      }
+    }
+
+    // Her 30 saniyede bir oturum kontrolü yapıyoruz.
+    const intervalId = setInterval(validateSession, 30000);
+
+    // Kullanıcı sekmeye geri döndüğünde de oturumu kontrol ediyoruz.
+    function handleVisibilityChange() {
+
+      if (document.visibilityState === "visible") {
+        validateSession();
+      }
+
+    }
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    // Oturum kapandığında zamanlayıcıyı temizliyoruz.
+    return () => {
+
+      cancelled = true;
+
+      clearInterval(intervalId);
+
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+
+    };
+
+  }, [isAuthenticated]);
+
+  // Başarılı giriş sonrasında oturumu doğruluyoruz.
   async function handleLogin() {
 
-    // Cookie'nin backend tarafından doğrulanabildiğini kontrol ediyoruz.
     const currentUser = await getCurrentUser();
 
-    // Geçerli oturum oluşmadıysa hata gösteriyoruz.
     if (!currentUser) {
       throw new Error(
         "Oturum oluşturulamadı. Lütfen tekrar giriş yapınız."
       );
     }
 
-    // Kullanıcı bilgilerini React state içerisinde saklıyoruz.
     setUser(currentUser);
     setError("");
+    setSessionMessage("");
+
   }
 
-  // Kullanıcı çıkış yaptığında çalışan fonksiyon.
+  // Kullanıcının çıkış yapmasını sağlıyoruz.
   async function handleLogout() {
 
-    // Backend'e çıkış isteği gönderiyoruz.
     await logoutUser();
 
-    // Backend çıkışı onayladıktan sonra kullanıcı bilgisini temizliyoruz.
     setUser(null);
     setError("");
+    setSessionMessage("");
+
   }
 
-  // Başarısız oturum kontrolünü tekrar deniyoruz.
+  // Bağlantı hatasında tekrar deneme fonksiyonu.
   function handleRetry() {
 
     setError("");
     setLoading(true);
 
-    // Sayaç değişince useEffect tekrar çalışacak.
     setRetryCount((previousCount) => previousCount + 1);
+
   }
 
-  // Oturum kontrolü devam ediyorsa yükleniyor ekranını gösteriyoruz.
+  // Oturum kontrolü sırasında gösterilecek ekran.
   if (loading) {
     return (
       <main className="app-status-page">
-
         <section className="app-status-card" role="status">
 
           <div className="loading-spinner"></div>
@@ -129,16 +217,14 @@ function App() {
           <p>Lütfen bekleyiniz.</p>
 
         </section>
-
       </main>
     );
   }
 
-  // Sunucu bağlantısında hata varsa hata ekranını gösteriyoruz.
+  // Bağlantı hatası ekranı.
   if (error) {
     return (
       <main className="app-status-page">
-
         <section className="app-status-card">
 
           <h2>Bağlantı Hatası</h2>
@@ -154,12 +240,11 @@ function App() {
           </button>
 
         </section>
-
       </main>
     );
   }
 
-  // Kullanıcı oturum açmışsa Dashboard sayfasını gösteriyoruz.
+  // Geçerli oturum varsa kullanıcı panelini gösteriyoruz.
   if (user) {
     return (
       <Dashboard
@@ -170,8 +255,17 @@ function App() {
   }
 
   // Geçerli oturum yoksa giriş ekranını gösteriyoruz.
-  return <Login onLogin={handleLogin} />;
+  return (
+    <>
+      {sessionMessage && (
+        <div className="session-message" role="alert">
+          {sessionMessage}
+        </div>
+      )}
+
+      <Login onLogin={handleLogin} />
+    </>
+  );
 }
 
-// Ana uygulama bileşenini dışarı aktarıyoruz.
 export default App;
