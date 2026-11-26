@@ -1,47 +1,88 @@
-// Backend kimlik doğrulama API adresini tanımlıyoruz.
+// Backend kimlik doğrulama API adresi.
 const API_URL = "http://localhost:5000/api/auth";
 
-// Kullanıcı giriş isteğini backend'e gönderen fonksiyon.
-export async function loginUser(email, password) {
+// Bütün kimlik doğrulama isteklerinde kullanacağımız ortak fonksiyon.
+async function authRequest(endpoint, options = {}) {
   let response;
 
   try {
-    // Fetch API ile backend'e POST isteği gönderiyoruz.
-    response = await fetch(`${API_URL}/login`, {
-      method: "POST",
+    // Backend'e HTTP isteği gönderiyoruz.
+    response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
 
-      // Gönderdiğimiz verinin JSON olduğunu belirtiyoruz.
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      // Tarayıcının cookie almasına ve göndermesine izin veriyoruz.
+      // Tarayıcının cookie göndermesine ve almasına izin veriyoruz.
       credentials: "include",
 
-      // E-posta ve şifreyi JSON formatına dönüştürüyoruz.
-      body: JSON.stringify({
-        email,
-        password
-      })
+      // Oturum bilgilerinin önbellekten okunmasını engelliyoruz.
+      cache: "no-store"
     });
 
   } catch {
-    // Backend sunucusuna ulaşılamazsa hata oluşturuyoruz.
+    // Backend sunucusuna ulaşılamadığında hata oluşturuyoruz.
     throw new Error(
-      "Sunucuya bağlanılamadı. Lütfen daha sonra tekrar deneyiniz."
+      "Sunucuya bağlanılamadı. Lütfen tekrar deneyiniz."
     );
   }
 
   // Backend'den gelen JSON cevabını okuyoruz.
   const data = await response.json().catch(() => null);
 
-  // Backend hata döndürdüyse hata mesajını iletiyoruz.
+  // HTTP isteği başarısız olduysa hata oluşturuyoruz.
   if (!response.ok || !data?.success) {
-    throw new Error(
-      data?.message || "Giriş işlemi başarısız oldu."
+    const error = new Error(
+      data?.message || "İşlem başarısız oldu."
     );
+
+    // HTTP durum kodunu hata nesnesine ekliyoruz.
+    error.status = response.status;
+
+    throw error;
   }
 
-  // Giriş başarılıysa backend'den gelen bilgileri döndürüyoruz.
   return data;
+}
+
+// Kullanıcı giriş fonksiyonu.
+export async function loginUser(email, password) {
+  return authRequest("/login", {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify({
+      email,
+      password
+    })
+  });
+}
+
+// Kullanıcının mevcut oturumunu kontrol eden fonksiyon.
+export async function getCurrentUser() {
+  try {
+    const data = await authRequest("/me", {
+      method: "GET"
+    });
+
+    // Backend'den gelen kullanıcı bilgilerini döndürüyoruz.
+    return data.user;
+
+  } catch (error) {
+
+    // 401 hatası kullanıcının geçerli oturumu olmadığını gösterir.
+    if (error.status === 401) {
+      return null;
+    }
+
+    // Diğer hataları uygulamaya iletiyoruz.
+    throw error;
+  }
+}
+
+// Kullanıcının oturumunu kapatan fonksiyon.
+export async function logoutUser() {
+  return authRequest("/logout", {
+    method: "POST"
+  });
 }
